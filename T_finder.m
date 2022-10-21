@@ -1,5 +1,5 @@
 function [T01, T12, T23, T34, T35] = T_finder(t1,t2,t3,t4)
-
+% Finds the decimal representation of all the T matrixes based on the current angles of the joints
 
 
 L01 = 50;
