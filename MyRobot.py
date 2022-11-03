@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 import inspect
+import time
 
 import dynamixel_sdk as dxl
 
@@ -32,11 +33,11 @@ class MyRobot():
             [0.064,0,0,0]]
         self.forward_transform = np.zeros((4,4))             # Forward transformation Matrix
         self.joint_angles = [0, 0, 0, 0]                   # Internal joint angles in degree
-        self.joint_pos = np.zeros((4,4))                     # Internal joint positions calculated with each move_j
+        self.joint_pos = [0, 0, 0, 0]
 
         self.use_smooth_speed_flag = 0                  # Flag for using smooth speed
         self.rbt = 0                                    # RigidBodyTree
-        self.joint_limits = [0, 300, 30, 270, 10, 270, 10, 270] #Joint Limits in degree
+        self.joint_limits = [0, 300, 30, 270, 10, 270, 135, 270] #Joint Limits in degree
         self.ik = 0                                     # Inverse Kinematics Object
         self.ik_weights = [0.25, 0.25, 0.25, 1, 1, 1]        # Weights for inverse kinematics
         self.joint_offsets = [0, 0, 0, 0]     # Joint offsets to send to motor
@@ -103,7 +104,7 @@ class MyRobot():
         if overwrite_speeds:
             self.motor_speed = speeds
 
-        for i in range(0,len(self.motor_ids)-1):
+        for i in range(0,len(self.motor_ids)):
             if speeds[i] > 0 and speeds[i] <= 1:
                 speed = int(speeds[i]*100)
                 dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(self.portHandler, self.motor_ids[i], 32, speed)
@@ -113,7 +114,7 @@ class MyRobot():
                 elif dxl_error != 0:
                     print(self.packetHandler.getRxPacketError(dxl_error))
                 else:
-                    print("Speeds successfully changed for joint " + str(self.motor_id[i]))
+                    print("Speeds successfully changed for joint " + str(self.motor_ids[i]))
             else:
                 print("\nMovement speed out of range, enter value between ]0,1]")
 
@@ -130,7 +131,7 @@ class MyRobot():
         #   None
 
         self.motor_torque = torques
-        for i in range(0,len(self.motor_ids)-1):
+        for i in range(0,len(self.motor_ids)):
             if torques[i] > 0 and torques[i] <= 1:
                 dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(self.portHandler, self.motor_ids[i], 34, torques[i]*1023)
 
@@ -139,7 +140,7 @@ class MyRobot():
                 elif dxl_error != 0:
                     print(self.packetHandler.getRxPacketError(dxl_error))
                 else:
-                    print("Motor torque succesfully changed for joint " + str(self.motor_id[i]))
+                    print("Motor torque succesfully changed for joint " + str(self.motor_ids[i]))
             else:
                print("\nTorque limit out of range, enter value between ]0,1]")
 
@@ -230,11 +231,9 @@ class MyRobot():
 
         while True:
             self.read_joint_angles()
-            if sum(self.joint_angle_error)<2:
+            if max(self.joint_angle_error) < 0.5:
                 break
-            else:
-                print(self.joint_angles)
-        print("At Goal")
+        print("At Goal!\nCurrent pos; 1: " + str(self.joint_pos[0]) + ", 2: " + str(self.joint_pos[1]) + ", 3: " + str(self.joint_pos[2]) + ", 4: " + str(self.joint_pos[3]))
 
     def  read_joint_angles(self):
         #read_joint_angles function for the MyRobot Class.
@@ -245,7 +244,7 @@ class MyRobot():
         #Outputs:
         #   j_a : a vector containing joint angles [deg]
         j_a = [0,0,0,0]
-        for i in range(0,len(self.motor_ids)-1):
+        for i in range(0,len(self.motor_ids)):
             dxl_present_position, dxl_comm_result, dxl_error = self.packetHandler.read2ByteTxRx(self.portHandler, self.motor_ids[i], 36)
 
             if dxl_comm_result != self.COMM_SUCCESS:
@@ -254,9 +253,18 @@ class MyRobot():
                 print(self.packetHandler.getRxPacketError(self.PROTOCOL_VERSION, dxl_error))
             else:
                 j_a[i] = self.rot_to_deg(dxl_present_position) - self.joint_offsets[i]
-                self.joint_angle_error[i] = j_a[i]-self.joint_angles[i]
+                self.joint_pos[i] = j_a[i]
+                self.joint_angle_error[i] = abs(j_a[i]-self.joint_angles[i])
 
         return j_a
 
 if __name__ == "__main__":
     robot = MyRobot(0.5, 'COM4', 1000000)
+    time.sleep(1)
+    print(robot.read_joint_angles())
+    robot.move_j(150,110,110,135)
+    time.sleep(1)
+    print(robot.read_joint_angles())
+    robot.move_j(0,90,270,150)
+    time.sleep(1)
+    print(robot.read_joint_angles())
