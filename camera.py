@@ -61,7 +61,16 @@ def find_smarties(frame):
 
 def find_keypoints(frame, nr_corners, quality=0.01, min_dist = 1,winSize = (5,5)):
     """
-        Function that finds the key features of image
+        Function that finds the key features of image for further manipulation
+        Inputs:
+            frame: image that is analysed
+            nr_corners: number of features to find
+            quality: quality of feature that is found, value from [0,1]
+            mind_dist: minumum distance between each feature
+            winSize: window size for more accurate position of feature
+        Outputs:
+            out_img: image containing drawn features
+            corners: list of positions for each feature
     """
     out_img = frame.copy()
     if(len(frame.shape)==3):
@@ -82,24 +91,114 @@ def find_keypoints(frame, nr_corners, quality=0.01, min_dist = 1,winSize = (5,5)
 
 def rectify(prev,curr,feat1):
     """
-        Function that
+        Function that uses optical flow to rectify the two images
+        Inputs:
+            prev: previous image to consider
+            curr: current image, showing current field of view
+            feat1: last feature to be found from prev image
+        Outputs:
+            prev_rectified: previous image rectified
+            curr_rectified: current image rectified
+            feat2: features from current image
     """
     if(len(prev.shape)==3):
         prev = cv.cvtColor(prev,cv.COLOR_BGR2GRAY)
     if(len(curr.shape)==3):
         curr = cv.cvtColor(curr,cv.COLOR_BGR2GRAY)
+    cameraM = np.array([[fx, 0, cx],[0, fy, cy],[0, 0, 1]])
 
     feat2, status, error = cv.calcOpticalFlowPyrLK(prev, curr, feat1, None)
     F, mask = cv.findFundamentalMat(feat1,feat2,cv.FM_LMEDS)
+    feat1 = feat1[mask.ravel() == 1]
+    feat2 = feat2[mask.ravel() == 1]
     h, w = curr.shape
     ret, H1, H2 = cv.stereoRectifyUncalibrated(feat1,feat2,F,(w,h))
-    print(F)
-    print(H1)
-    print(H2)
-    new_curr = []
-    new_prev = []
-    return new_prev, new_curr, feat2
 
+    R1 = np.linalg.inv(CameraM)*H1*CameraM
+    R2 = np.linalg.inv(CameraM)*H2*CameraM
+
+    prevMapX, prevMapY = cv.initUndistortRectifyMap(CameraM,None,R1,CameraM,(w,h),cv.CV_32FC1)
+    currMapX, currMapY = cv.initUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
+
+    prev_rectified = cv.remap(prev,prevMapX,prevMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+    curr_rectified = cv.remap(curr,currMapX,currMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+
+    return prev_rectified, curr_rectified, feat2
+
+def drawlines(img1,img2,lines,pts1,pts2):
+    '''
+        img1 - image on which we draw the epilines for the points in img2
+        lines - corresponding epilines
+    '''
+
+    r,c,tmp = img1.shape
+    #img1 = cv.cvtColor(img1,cv.COLOR_GRAY2BGR)
+    #img2 = cv.cvtColor(img2,cv.COLOR_GRAY2BGR)
+    for r,pt1,pt2 in zip(lines,pts1,pts2):
+        color = tuple(np.random.randint(0,255,3).tolist())
+        x0,y0 = map(int, [0, -r[2]/r[1] ])
+        x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
+        img1 = cv.line(img1, (x0,y0), (x1,y1), color,2)
+        img1 = cv.circle(img1,tuple(pt1),5,color,-1)
+        img2 = cv.circle(img2,tuple(pt2),5,color,-1)
+    return img1,img2
+
+def check_epilines(prev,curr):
+    """
+        function that finds and draws the epilines on given images
+        Inputs:
+            prev: previous image
+            curr: current image
+        Outputs:
+            img5: previous image with drawn epilines
+            img3: current image with drawn epilines
+    """
+    # Create a sift detector
+    sift = cv.SIFT_create()
+
+    # find the keypoints and descriptors with SIFT
+    kp1, des1 = sift.detectAndCompute(prev, None)
+    kp2, des2 = sift.detectAndCompute(curr, None)
+
+    kp_img_prev = cv.drawKeypoints(prev, kp1, prev, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    kp_img_curr = cv.drawKeypoints(curr, kp2, curr, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+
+    bf = cv.BFMatcher()
+    matches = bf.match(des1, des2)
+    matches = sorted(matches, key = lambda x:x.distance)
+
+    nb_matches = 200
+    good = []
+    pts1 = []
+    pts2 = []
+    # Using 200 best matches
+    for m in matches[:nb_matches]:
+        good.append(m)
+        # Extract points corresponding to matches.
+        pts1.append(kp1[m.queryIdx].pt)
+        pts2.append(kp2[m.trainIdx].pt)
+
+    pts1 = np.int32(pts1)
+    pts2 = np.int32(pts2)
+
+    F, mask =cv.findFundamentalMat(pts1, pts2, method=cv.FM_RANSAC)
+
+    pts1 = pts1[mask.ravel() == 1]
+    pts2 = pts2[mask.ravel() == 1]
+
+
+    # Find epilines corresponding to points in right image (second image) and
+    # drawing its lines on left image
+    lines1 = cv.computeCorrespondEpilines(pts2.reshape(-1, 1, 2), 2 ,F)
+    lines1 = lines1.reshape(-1, 3)
+    img5, img6 = drawlines(prev, curr, lines1, pts1, pts2)
+
+    # Find epilines corresponding to points in left image (first image) and
+    # drawing its lines on right image
+    lines2 = cv.computeCorrespondEpilines(pts1.reshape(-1, 1, 2), 1, F)
+    lines2 = lines2.reshape(-1, 3)
+    img3, img4 = drawlines(curr, prev, lines2, pts2, pts1)
+    return img5, img3
 
 
 
@@ -108,10 +207,16 @@ if __name__ == "__main__":
     curr = cv.imread("Images/curr_frame.jpg")
 
     prev_img, feat1 = find_keypoints(prev,25)
-    new_prev, new_curr, feat2 = rectify(prev, curr, feat1)
+
+    new_prev, new_curr = check_epilines(prev,curr)
 
 
+    cv.imshow('epi1',new_prev)
+    cv.imshow('epi2',new_curr)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
 
+"""
     for i in range(len(feat1)):
         f10=int(feat1[i][0][0])
         f11=int(feat1[i][0][1])
@@ -123,9 +228,8 @@ if __name__ == "__main__":
     cv.imshow('curr',curr)
     cv.imshow('prev',prev_img)
     print(len(feat2))
+"""
 
-    cv.waitKey(0)
-    cv.destroyAllWindows()
 
 """ Smarties detection
 
