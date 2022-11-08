@@ -4,8 +4,10 @@ function T = T04(theta1, theta2, theta3, theta4)
 % the solution from exercise 1.
 
 e1 = sind(theta4)*(cosd(theta3)*(cosd(theta1)*sind(theta2) + cosd(theta2)*sind(theta1)) + sind(theta3)*(cosd(theta1)*cosd(theta2) - sind(theta1)*sind(theta2)));
-e2 = -cosd(theta4)*(cosd(theta3)*(cosd(theta1)*sind(theta2) + cosd(theta2)*sind(theta1)) + sind(theta3)*(cosd(theta1)*cosd(theta2) - sind(theta1)*sind(theta2))) - sind(theta4);
+
 e3 = cosd(theta3)*(cosd(theta1)*cosd(theta2) - sind(theta1)*sind(theta2)) - sind(theta3)*(cosd(theta1)*sind(theta2) + cosd(theta2)*sind(theta1));
+
+e2 = -cosd(theta4)*(cosd(theta3)*(cosd(theta1)*sind(theta2) + cosd(theta2)*sind(theta1)) + sind(theta3)*(cosd(theta1)*cosd(theta2) - sind(theta1)*sind(theta2))) - sind(theta4)*e3;
 
 T = [e2, e1 - cosd(theta4)*e3, 0, 93*cosd(theta1) - 93*cosd(theta1)*sind(theta2) - 93*cosd(theta2)*sind(theta1);
      0, 0, -1, -50;
