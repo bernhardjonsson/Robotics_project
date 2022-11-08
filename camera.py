@@ -8,7 +8,7 @@ import imutils
 #   red:   (179,5)
 #   purple:(150,15)
 
-def mask_red(frame,color_val,thres):
+def mask_smarties(frame,color_val,thres):
     """
         A masking function that uses color mask on object from image using
         hsv color space.
@@ -59,18 +59,78 @@ def find_smarties(frame):
 
     return out_img, points
 
-def rectify():
-    pass
+def find_keypoints(frame, nr_corners, quality=0.01, min_dist = 1,winSize = (5,5)):
+    """
+        Function that finds the key features of image
+    """
+    out_img = frame.copy()
+    if(len(frame.shape)==3):
+        gray1 = cv.cvtColor(prev,cv.COLOR_BGR2GRAY)
+
+    feat1 = cv.goodFeaturesToTrack(gray1,nr_corners,quality,min_dist)
+    for i in range(feat1.shape[0]):
+        cv.circle(out_img, (int(feat1[i,0,0]), int(feat1[i,0,1])), 4,(255, 0, 0), cv.FILLED)
+
+    # Set the needed parameters to find the refined corners, more accurate
+    # position
+    zeroZone = (-1, -1)
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TermCriteria_COUNT, 40, 0.001)
+    # Calculate the refined corner locations
+    corners = cv.cornerSubPix(gray1, feat1, winSize, zeroZone, criteria)
+
+    return out_img, corners
+
+def rectify(prev,curr,feat1):
+    """
+        Function that
+    """
+    if(len(prev.shape)==3):
+        prev = cv.cvtColor(prev,cv.COLOR_BGR2GRAY)
+    if(len(curr.shape)==3):
+        curr = cv.cvtColor(curr,cv.COLOR_BGR2GRAY)
+
+    feat2, status, error = cv.calcOpticalFlowPyrLK(prev, curr, feat1, None)
+    F, mask = cv.findFundamentalMat(feat1,feat2,cv.FM_LMEDS)
+    h, w = curr.shape
+    ret, H1, H2 = cv.stereoRectifyUncalibrated(feat1,feat2,F,(w,h))
+    print(F)
+    print(H1)
+    print(H2)
+    new_curr = []
+    new_prev = []
+    return new_prev, new_curr, feat2
 
 
 
 
 if __name__ == "__main__":
-
     prev = cv.imread("Images/prev_frame.jpg")
     curr = cv.imread("Images/curr_frame.jpg")
+
+    prev_img, feat1 = find_keypoints(prev,25)
+    new_prev, new_curr, feat2 = rectify(prev, curr, feat1)
+
+
+
+    for i in range(len(feat1)):
+        f10=int(feat1[i][0][0])
+        f11=int(feat1[i][0][1])
+        f20=int(feat2[i][0][0])
+        f21=int(feat2[i][0][1])
+        cv.line(curr, (f10,f11), (f20, f21), (0, 255, 0), 2)
+        cv.circle(curr, (f10, f11), 5, (0, 255, 0), -1)
+
+    cv.imshow('curr',curr)
+    cv.imshow('prev',prev_img)
+    print(len(feat2))
+
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+
+""" Smarties detection
+
     smarties = cv.imread("Images/Smarties.jpg")
-    masked_img, mask = mask_red(smarties,179,5)
+    masked_img, mask = mask_smarties(smarties,179,5)
     cnt,points = find_smarties(mask)
 
     cv.imshow('prev',smarties)
@@ -83,3 +143,4 @@ if __name__ == "__main__":
 
     cv.waitKey(0)
     cv.destroyAllWindows()
+"""
