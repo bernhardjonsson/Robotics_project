@@ -102,26 +102,37 @@ def rectify(prev,curr,feat1):
             feat2: features from current image
     """
     if(len(prev.shape)==3):
-        prev = cv.cvtColor(prev,cv.COLOR_BGR2GRAY)
+        prev_gray = cv.cvtColor(prev,cv.COLOR_BGR2GRAY)
     if(len(curr.shape)==3):
-        curr = cv.cvtColor(curr,cv.COLOR_BGR2GRAY)
-    cameraM = np.array([[fx, 0, cx],[0, fy, cy],[0, 0, 1]])
+        curr_gray = cv.cvtColor(curr,cv.COLOR_BGR2GRAY)
+    else:
+        prev_gray = prev
+        curr_gray = curr
+    fx = 1430
+    fy = 1430
+    cx = 240
+    cy = 320
+    CameraM = np.array([[fx, 0, cx],[0, fy, cy],[0, 0, 1]])
 
-    feat2, status, error = cv.calcOpticalFlowPyrLK(prev, curr, feat1, None)
+    feat2, status, error = cv.calcOpticalFlowPyrLK(prev_gray, curr_gray, feat1, None)
     F, mask = cv.findFundamentalMat(feat1,feat2,cv.FM_LMEDS)
     feat1 = feat1[mask.ravel() == 1]
     feat2 = feat2[mask.ravel() == 1]
-    h, w = curr.shape
+    h, w = curr_gray.shape
     ret, H1, H2 = cv.stereoRectifyUncalibrated(feat1,feat2,F,(w,h))
 
-    R1 = np.linalg.inv(CameraM)*H1*CameraM
-    R2 = np.linalg.inv(CameraM)*H2*CameraM
+    #R1 = np.linalg.inv(CameraM)*H1*CameraM
+    #R2 = np.linalg.inv(CameraM)*H2*CameraM
+    #print(R1)
+    #print(R2)
+    #prevMapX, prevMapY = cv.initUndistortRectifyMap(CameraM,None,R1,CameraM,(w,h),cv.CV_32FC1)
+    #currMapX, currMapY = cv.initUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
 
-    prevMapX, prevMapY = cv.initUndistortRectifyMap(CameraM,None,R1,CameraM,(w,h),cv.CV_32FC1)
-    currMapX, currMapY = cv.initUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
+    #prev_rectified = cv.remap(prev,prevMapX,prevMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+    #curr_rectified = cv.remap(curr,currMapX,currMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
 
-    prev_rectified = cv.remap(prev,prevMapX,prevMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
-    curr_rectified = cv.remap(curr,currMapX,currMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
+    prev_rectified = cv.warpPerspective(prev,H1,(w,h),cv.INTER_LINEAR,cv.BORDER_REPLICATE)
+    curr_rectified = cv.warpPerspective(curr,H2,(w,h),cv.INTER_LINEAR,cv.BORDER_REPLICATE)
 
     return prev_rectified, curr_rectified, feat2
 
@@ -130,7 +141,8 @@ def drawlines(img1,img2,lines,pts1,pts2):
         img1 - image on which we draw the epilines for the points in img2
         lines - corresponding epilines
     '''
-
+    out_img1 = img1.copy()
+    out_img2 = img2.copy()
     r,c,tmp = img1.shape
     #img1 = cv.cvtColor(img1,cv.COLOR_GRAY2BGR)
     #img2 = cv.cvtColor(img2,cv.COLOR_GRAY2BGR)
@@ -138,9 +150,9 @@ def drawlines(img1,img2,lines,pts1,pts2):
         color = tuple(np.random.randint(0,255,3).tolist())
         x0,y0 = map(int, [0, -r[2]/r[1] ])
         x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
-        img1 = cv.line(img1, (x0,y0), (x1,y1), color,2)
-        img1 = cv.circle(img1,tuple(pt1),5,color,-1)
-        img2 = cv.circle(img2,tuple(pt2),5,color,-1)
+        img1 = cv.line(out_img1, (x0,y0), (x1,y1), color,2)
+        img1 = cv.circle(out_img1,tuple(pt1),5,color,-1)
+        img2 = cv.circle(out_img2,tuple(pt2),5,color,-1)
     return img1,img2
 
 def check_epilines(prev,curr):
@@ -159,9 +171,9 @@ def check_epilines(prev,curr):
     # find the keypoints and descriptors with SIFT
     kp1, des1 = sift.detectAndCompute(prev, None)
     kp2, des2 = sift.detectAndCompute(curr, None)
-
-    kp_img_prev = cv.drawKeypoints(prev, kp1, prev, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-    kp_img_curr = cv.drawKeypoints(curr, kp2, curr, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    #cv.imshow('2.5',prev)
+    #kp_img_prev = cv.drawKeypoints(prev, kp1, prev, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    #kp_img_curr = cv.drawKeypoints(curr, kp2, curr, flags=cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
     bf = cv.BFMatcher()
     matches = bf.match(des1, des2)
@@ -205,14 +217,22 @@ def check_epilines(prev,curr):
 if __name__ == "__main__":
     prev = cv.imread("Images/prev_frame.jpg")
     curr = cv.imread("Images/curr_frame.jpg")
+    print(prev.shape)
 
-    prev_img, feat1 = find_keypoints(prev,25)
+    prev_img, feat1 = find_keypoints(prev,200)
 
+    #cv.imshow('1',prev)
     new_prev, new_curr = check_epilines(prev,curr)
+    #cv.imshow('2',prev)
+    prev_r, curr_r, feat2 = rectify(prev,curr,feat1)
+
+    prev_r, curr_r = check_epilines(prev_r[0],curr_r)
 
 
     cv.imshow('epi1',new_prev)
     cv.imshow('epi2',new_curr)
+    cv.imshow('r1',prev_r)
+    cv.imshow('r2',curr_r)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
