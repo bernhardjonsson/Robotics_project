@@ -40,7 +40,7 @@ class MyRobot():
         self.joint_limits = [0, 300, 30, 270, 10, 270, 135, 270] #Joint Limits in degree
         self.ik = 0                                     # Inverse Kinematics Object
         self.ik_weights = [0.25, 0.25, 0.25, 1, 1, 1]        # Weights for inverse kinematics
-        self.joint_offsets = [0, 0, 0, 0]     # Joint offsets to send to motor
+        self.joint_offsets = [150, 60, 150, 240]     # Joint offsets to send to motor
         self.joint_angle_error = [0, 0, 0, 0]              # Internal joint angle error between read out of joint angles and input joint angles
         self.init_status = 0                            # Initialization succesfull flag
         self.movement_history = []                      # List to record movement history
@@ -64,7 +64,7 @@ class MyRobot():
         # Move to initial position
         self.set_speed([speed,speed,speed,speed],True)
         self.set_torque_limit([torque_lim,torque_lim,torque_lim,torque_lim])
-        self.move_j(150,150,150,150)
+        self.move_j(0,0,0,0)
         self.init_status = 1
 
 
@@ -161,9 +161,12 @@ class MyRobot():
         elif motor_id==self.motor_ids[1]:
             error_str = "Angle Limits for second Axis Reached, got " + str(deg)
             assert deg > 30 or deg < 270, error_str
+        elif motor_id==self.motor_ids[2]:
+            error_str = "Angle Limits for second Axis Reached, got " + str(deg)
+            assert deg > 30 or deg < 270, error_str
         else:
             error_str = "Angle Limits Reached, got " + str(deg)
-            assert deg > 10 or deg < 290 , error_str
+            assert deg > 125 or deg < 300 , error_str
         return deg
 
 
@@ -231,8 +234,9 @@ class MyRobot():
 
         while True:
             self.read_joint_angles()
-            if max(self.joint_angle_error) < 0.5:
+            if max(self.joint_angle_error) < 2.5:
                 break
+            #print(self.joint_pos)
         print("At Goal!\nCurrent pos; 1: " + str(self.joint_pos[0]) + ", 2: " + str(self.joint_pos[1]) + ", 3: " + str(self.joint_pos[2]) + ", 4: " + str(self.joint_pos[3]))
 
     def  read_joint_angles(self):
@@ -250,7 +254,7 @@ class MyRobot():
             if dxl_comm_result != self.COMM_SUCCESS:
                 print(self.packetHandler.getTxRxResult(self.PROTOCOL_VERSION, dxl_comm_result))
             elif dxl_error != 0:
-                print(self.packetHandler.getRxPacketError(self.PROTOCOL_VERSION, dxl_error))
+                raise Exception(self.packetHandler.getRxPacketError(dxl_error))
             else:
                 j_a[i] = self.rot_to_deg(dxl_present_position) - self.joint_offsets[i]
                 self.joint_pos[i] = j_a[i]
@@ -259,12 +263,21 @@ class MyRobot():
         return j_a
 
 if __name__ == "__main__":
-    robot = MyRobot(0.5, 'COM4', 1000000)
+    robot = MyRobot(0.2, 'COM4', 1000000)
     time.sleep(1)
-    print(robot.read_joint_angles())
-    robot.move_j(150,110,110,135)
-    time.sleep(1)
-    print(robot.read_joint_angles())
-    robot.move_j(0,90,270,150)
-    time.sleep(1)
-    print(robot.read_joint_angles())
+    q1 = [0.785398163397448,	0.782859700178104,	0.775245229424790,
+    	0.762563057934510,	0.744845701771392,	0.722178281396460,
+    	0.694738276196703,	0.662844822335062,	0.627012769781415,
+        	0.588002603547568,	0.546853258599602,	0.504883106683238,	0.463647609000806,
+        	0.424851402989201,	0.390225480757561,	0.361390800374622,	0.339732374460581,
+        	0.326301283451130,	0.321750554396642,	0.326301283451130,	0.339732374460581,
+            	0.361390800374622,	0.390225480757561,	0.424851402989201,	0.463647609000806,
+                	0.504883106683238,	0.546853258599602,	0.588002603547567,	0.627012769781414,	0.662844822335062,	0.694738276196703,	0.722178281396460,	0.744845701771392,	0.762563057934510,	0.775245229424790,	0.782859700178104,	0.785398163397448]
+    q2 = [0.827932523851085,	-0.914383143187339,	0.182783856970528,
+    	1.03315441902074,	1.71960564774657,	-0.782746439039840,
+        -0.0280185209855236,	1.06652809089144,	-0.355140794249573,	-0.870729768768192,	-0.355140794249573,	1.06652809089142,	-0.0280185209855236,	-0.782746439039840,	1.71960564774657,	1.03315441902074,	0.182783856970528,	-0.914383143187339,	0.827932523851085,	-0.903540506333484,	0.168809594507393,	0.921397222236792,	1.39347273833791,	1.64123903488269,	-1.41014658166026,	-1.40876553348348,	-1.43582917870912,	-1.44979096017814,	-1.43582917870912,	-1.40876553348348,	-1.41014658166026,1.64123903488269,	1.39347273833791,	0.921397222236792,
+        	0.168809594507393,	-0.903540506333484,	0.827932523851085]
+    q3 =[63.5604229014964,60.0129070558653,55.8735482356189,51.2509522949370,46.3091903468590,41.2803460930672,36.4887999985645,32.3824758136985,29.5319907453210,28.4984617912664,29.5319907453210,32.3824758136984,36.4887999985645,41.2803460930672,46.3091903468590,51.2509522949370,55.8735482356189,60.0129070558653,63.5604229014964,66.4581611915136,68.6970707451787,70.3143317146558,71.3872658159858,72.0227685196403,72.3427287729831,72.4670605264257,72.4966377695115,72.4986417657988,72.4966377695115,72.4670605264257,72.3427287729831,72.0227685196403,71.3872658159858,70.3143317146558,68.6970707451787,66.4581611915136,63.5604229014964]
+    q4 = [-62.8175590985526,-57.5277275858830,-54.4855357657945,-50.7133103871628,-46.4579996678107,-38.9268033272324,-34.8899851507841,-31.8782075777950,-27.6060536242765,-26.0569356957033,-27.6060536242765,-31.8782075777949,-34.8899851507841,-38.9268033272324,-46.4579996678107,-50.7133103871628,-54.4855357657945,-57.5277275858830,-62.8175590985526,-63.9838243583852,-67.2950840128912,-69.6649326100977,-71.2099422275288,-72.0932112277281,-69.3617858645279,-69.4874986661473,-69.4900122640075,-69.4780544788257,-69.4900122640075,-69.4874986661473,-69.3617858645279,-72.0932112277281,-71.2099422275288,-69.6649326100977,-67.2950840128912,-63.9838243583852,-62.8175590985526]
+    for i in range(len(q1)):
+        robot.move_j(q1[i],q2[i],q3[i],q4[i])

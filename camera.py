@@ -226,7 +226,7 @@ if __name__ == "__main__":
     #cv.imshow('2',prev)
     prev_r, curr_r, feat2 = rectify(prev,curr,feat1)
 
-    prev_r, curr_r = check_epilines(prev_r[0],curr_r)
+    prev_r, curr_r = check_epilines(prev_r,curr_r)
 
 
     cv.imshow('epi1',new_prev)
