@@ -14,13 +14,25 @@ o_03 = o_04 - a3*x_04;
 
 r_13 = sqrt(o_03(1)^2 + (o_03(3)-a0)^2);
 
+value = (a1^2 + a2^2 - r_13^2)/(2*a1*a2);
 
-theta3 = acos((a1^2 + a2^2 - r_13^2)/(2*a1*a2))
+% I can do this becaus of how the inverse cosine function works
+
+while value > 1
+	value = value - 1;
+end
+
+while value < -1
+	value = value + 1;
+end
+
+
+theta3 = acos(value);
 
 phi = atan2(o_03(3) - a0, o_03(3));
 
-a2*sin(theta3)
-a1 + a2*cos(theta3)
+a2*sin(theta3);
+a1 + a2*cos(theta3);
 psi = atan2(a2*sin(theta3), a1 + a2*cos(theta3));
 
 theta2 = phi + psi;
@@ -31,14 +43,14 @@ theta4 = theta234 - theta3 - theta2;
 
 % theta4 = asin((o_04(3) - o_03(3))/a3);
 
-disp('Angles:')
-disp(' theta1: ')
-disp(theta1)
-disp(' theta2: ')
-disp(theta2)
-disp(' theta3: ')
-disp(theta3)
-disp(' theta4: ')
-disp(theta4)
+%disp('Angles:')
+%disp(' theta1: ')
+%disp(theta1)
+%disp(' theta2: ')
+%disp(theta2)
+%disp(' theta3: ')
+%disp(theta3)
+%disp(' theta4: ')
+%disp(theta4)
 
 end
