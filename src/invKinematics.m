@@ -13,28 +13,14 @@ theta1 = atan2(o_04(2), o_04(1));
 o_03 = o_04 - a3*x_04;
 
 r3 = sqrt(o_03(1)^2 + o_03(2)^2);
-
 r_13 = sqrt(r3^2 + (o_03(3)-a0)^2);
 
 value = (a1^2 + a2^2 - r_13^2)/(2*a1*a2);
 
-% I can do this becaus of how the inverse cosine function works
-
-while value > 1
-	value = value - 1;
-end
-
-while value < -1
-	value = value + 1;
-end
-
-
-theta3 = acos(value);
-
+theta3 = acosd((-a1^2 - a2^2 + r_13^2)/(2*a1*a2));
+%theta3 = real(theta3)
 phi = atan2(o_03(3) - a0, r3);
 
-a2*sin(theta3);
-a1 + a2*cos(theta3);
 psi = atan2(a2*sin(theta3), a1 + a2*cos(theta3));
 
 theta2 = phi + psi;
