@@ -2,7 +2,7 @@ function [t1,t2,t3] = theta(x,y,z)
 L01 = 50;
 L12 = 93;
 L23 = 93;
-D = (x.^2 + y.^2 - L12^2 + (z - L01).^2 - L12^2 - L23^2)/(2*L12*L23);
+D = (x.^2 + y.^2 - L12^2 + (z - L01).^2 - L12^2 - L23^2)/(2*L12*L23)
 
 % we migt need to refine the functions here. Based on math from Taras
 

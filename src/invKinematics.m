@@ -15,6 +15,7 @@ o_03 = o_04 - a3*x_04;
 r3 = sqrt(o_03(1)^2 + o_03(2)^2);
 r_13 = sqrt(r3^2 + (o_03(3)-a0)^2);
 
+value = (a1^2 + a2^2 - r_13^2)/(2*a1*a2);
 
 theta3 = acosd((-a1^2 - a2^2 + r_13^2)/(2*a1*a2));
 %theta3 = real(theta3)
@@ -30,14 +31,14 @@ theta4 = theta234 - theta3 - theta2;
 
 % theta4 = asin((o_04(3) - o_03(3))/a3);
 
-disp('Angles:')
-disp(' theta1: ')
-disp(theta1)
-disp(' theta2: ')
-disp(theta2)
-disp(' theta3: ')
-disp(theta3)
-disp(' theta4: ')
-disp(theta4)
+%disp('Angles:')
+%disp(' theta1: ')
+%disp(theta1)
+%disp(' theta2: ')
+%disp(theta2)
+%disp(' theta3: ')
+%disp(theta3)
+%disp(' theta4: ')
+%disp(theta4)
 
 end
