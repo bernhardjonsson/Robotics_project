@@ -1,7 +1,10 @@
+clc
+clear all
+
 % Test that the forward kinematics matrix outputs the position and
 % orientation from the beggining
 
-o_04 = [15, 0, 20]';
+o_04 = [150, 32, 120]';
 
 x_04 = [1, 0, 0];
 
