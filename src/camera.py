@@ -126,7 +126,7 @@ def rectify(prev,curr,feat1):
     #print(R1)
     #print(R2)
     #prevMapX, prevMapY = cv.initUndistortRectifyMap(CameraM,None,R1,CameraM,(w,h),cv.CV_32FC1)
-    #currMapX, currMapY = cv.initUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
+    #currMapX, currMapY = cv.ixnitUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
 
     #prev_rectified = cv.remap(prev,prevMapX,prevMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
     #curr_rectified = cv.remap(curr,currMapX,currMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
