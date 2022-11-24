@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 import imutils
+import sys, os
 
 # color values and thresholds for different Smarties (color value,threshold)
 #   Green: (55,25)
@@ -126,7 +127,7 @@ def rectify(prev,curr,feat1):
     #print(R1)
     #print(R2)
     #prevMapX, prevMapY = cv.initUndistortRectifyMap(CameraM,None,R1,CameraM,(w,h),cv.CV_32FC1)
-    #currMapX, currMapY = cv.initUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
+    #currMapX, currMapY = cv.ixnitUndistortRectifyMap(CameraM,None,R2,CameraM,(w,h),cv.CV_32FC1)
 
     #prev_rectified = cv.remap(prev,prevMapX,prevMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
     #curr_rectified = cv.remap(curr,currMapX,currMapY,cv.INTER_LINEAR, cv.BORDER_CONSTANT)
@@ -212,29 +213,81 @@ def check_epilines(prev,curr):
     img3, img4 = drawlines(curr, prev, lines2, pts2, pts1)
     return img5, img3
 
+def get_circles(image):
+    im_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
+    # Blur using 3x3 kernel
+    gray_blurred = cv.blur(im_gray, (3,3))
+
+    det_circles = cv.HoughCircles(gray_blurred, cv.HOUGH_GRADIENT, dp = 1, minDist = 20, param1 = 50,
+                                    param2 = 30, minRadius = 10, maxRadius = 40)
+    
+    # Draw detected circles
+    if det_circles is not None:
+        det_circles = np.uint16(np.around(det_circles))
+        det_circles = det_circles[0]
+        centers= []
+        for pt in det_circles:
+            a, b, r = pt[0], pt[1], pt[2]
+            # Draw the circle
+            cv.circle(im, (a, b), r, (0,255,0), 2)
+            # Draw the center
+            cv.circle(im, (a, b), 1, (0,0,255), 3)
+        cv.imwrite("detected_skittles.jpg", im)
+        cv.imshow("Detected circles", im)
+        cv.waitKey(0)
+    else:
+        print("No circles were detected.")
+    
+    return det_circles
 
 if __name__ == "__main__":
-    prev = cv.imread("Images/prev_frame.jpg")
-    curr = cv.imread("Images/curr_frame.jpg")
-    print(prev.shape)
+    # prev = cv.imread("../Images/prev_frame.jpg")
+    # curr = cv.imread("../Images/curr_frame.jpg")
+    # print(prev.shape)
 
-    prev_img, feat1 = find_keypoints(prev,200)
+    # prev_img, feat1 = find_keypoints(prev,200)
 
-    #cv.imshow('1',prev)
-    new_prev, new_curr = check_epilines(prev,curr)
-    #cv.imshow('2',prev)
-    prev_r, curr_r, feat2 = rectify(prev,curr,feat1)
+    # #cv.imshow('1',prev)
+    # new_prev, new_curr = check_epilines(prev,curr)
+    # #cv.imshow('2',prev)
+    # prev_r, curr_r, feat2 = rectify(prev,curr,feat1)
 
-    prev_r, curr_r = check_epilines(prev_r,curr_r)
+    # prev_r, curr_r = check_epilines(prev_r,curr_r)
 
 
-    cv.imshow('epi1',new_prev)
-    cv.imshow('epi2',new_curr)
-    cv.imshow('r1',prev_r)
-    cv.imshow('r2',curr_r)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    # cv.imshow('epi1',new_prev)
+    # cv.imshow('epi2',new_curr)
+    # cv.imshow('r1',prev_r)
+    # cv.imshow('r2',curr_r)
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
+
+
+    # Circle detection for the skittles
+    im = cv.imread("../Images/Smarties.jpg", cv.IMREAD_COLOR)
+
+    # Get the array with format [x y r] in pixel coordinates
+    circles = get_circles(im)
+
+    boundaries = [([20, 20, 100], [50, 50, 255]),
+	            ([86, 31, 4], [220, 88, 50]),
+	            ([25, 146, 190], [62, 174, 250]),
+	            ([103, 86, 65], [145, 133, 128])]   
+
+    for (lower, upper) in boundaries:
+        lower = np.array(lower, dtype = 'uint8')        
+        upper = np.array(upper, dtype = 'uint8')
+
+        mask = cv.inRange(im, lower, upper)
+        out = cv.bitwise_and(im, im, mask = mask)
+
+        cv.imshow("images", np.hstack([im, out]))
+        cv.waitKey(0)
+    
+    
+    
+
 
 """
     for i in range(len(feat1)):
