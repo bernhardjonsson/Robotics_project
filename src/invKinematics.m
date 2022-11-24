@@ -3,7 +3,7 @@ function [theta1, theta2, theta3, theta4] = invKinematics(x_04, o_04)
 % TEST THE INVERSE KINEMATICS
 
 % Lengths
-a0 = 0;
+a0 = 50;
 a1 = 93;
 a2 = 93;
 a3 = 50;
