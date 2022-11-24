@@ -226,20 +226,52 @@ def get_circles(image):
     if det_circles is not None:
         det_circles = np.uint16(np.around(det_circles))
         det_circles = det_circles[0]
-        centers= []
-        for pt in det_circles:
-            a, b, r = pt[0], pt[1], pt[2]
-            # Draw the circle
-            cv.circle(im, (a, b), r, (0,255,0), 2)
-            # Draw the center
-            cv.circle(im, (a, b), 1, (0,0,255), 3)
-        cv.imwrite("detected_skittles.jpg", im)
-        cv.imshow("Detected circles", im)
-        cv.waitKey(0)
+        # for pt in det_circles:
+        #     a, b, r = pt[0], pt[1], pt[2]
+        #     # Draw the circle
+        #     cv.circle(im, (a, b), r, (0,255,0), 2)
+        #     # Draw the center
+        #     cv.circle(im, (a, b), 1, (0,0,255), 3)
+        # # cv.imshow("Detected circles", im)
+        # # cv.waitKey(0)
     else:
         print("No circles were detected.")
+        sys.exit()
     
     return det_circles
+
+def get_red_center(image):
+    masked_im, mask = mask_smarties(image, 179, 5)
+    _, points = find_smarties(mask)
+
+    # Compute the distances between the centers of the smarties and the found red centers
+    im_red = image.copy()
+    dist = []
+    for r in points:
+        for p in circles:
+            dist = np.append(dist, np.sqrt((p[0] - r[0])**2 + (p[1] - r[1])**2))
+
+    # Get the x minimum distances. x -> the number of found red centers
+    min_dist = np.partition(dist, 1)[0:len(points)]
+    dist = [dist[i:i+len(circles)] for i in range(0,len(dist),len(circles))]
+
+    # Compute the positions of the red centers and draw the corresponding circles
+    red_pos = []
+    for dist in dist:
+        min_dist = min(dist)
+        i = int(np.where(np.isclose(dist, min_dist))[0][0])
+        if len(red_pos) == 0:
+            red_pos = [(circles[i][0], circles[i][1])]
+        else:
+            red_pos = np.vstack((red_pos, (circles[i][0], circles[i][1])))
+        cv.circle(im_red, (circles[i][0], circles[i][1]), circles[i][2], (0,255,0), 2)
+        cv.circle(im_red, (circles[i][0], circles[i][1]), 2, (255,0,0), 2)
+
+    cv.imshow("Masked image", masked_im)
+    cv.waitKey(0)
+    return im_red, red_pos
+
+
 
 if __name__ == "__main__":
     # prev = cv.imread("../Images/prev_frame.jpg")
@@ -265,25 +297,34 @@ if __name__ == "__main__":
 
 
     # Circle detection for the skittles
-    im = cv.imread("../Images/Smarties.jpg", cv.IMREAD_COLOR)
+    im = cv.imread("../Images/skittles5.jpg")
 
     # Get the array with format [x y r] in pixel coordinates
     circles = get_circles(im)
+    im_red, red_points = get_red_center(im)
+    print(red_points)
 
-    boundaries = [([20, 20, 100], [50, 50, 255]),
-	            ([86, 31, 4], [220, 88, 50]),
-	            ([25, 146, 190], [62, 174, 250]),
-	            ([103, 86, 65], [145, 133, 128])]   
+    # Show the image
+    cv.imshow("Detected Smarties", im_red)
+    cv.waitKey(0)
 
-    for (lower, upper) in boundaries:
-        lower = np.array(lower, dtype = 'uint8')        
-        upper = np.array(upper, dtype = 'uint8')
+    
+    # # Smarties detection
 
-        mask = cv.inRange(im, lower, upper)
-        out = cv.bitwise_and(im, im, mask = mask)
+    # smarties = cv.imread("../Images/Smarties.jpg")
+    # masked_img, mask = mask_smarties(smarties,179,5)
+    # cnt,points = find_smarties(mask)
 
-        cv.imshow("images", np.hstack([im, out]))
-        cv.waitKey(0)
+    # cv.imshow('prev',smarties)
+    # cv.imshow('mask',masked_img)
+
+    # for p in points:
+    #     cv.circle(smarties, p, 7, (0, 0, 0), 2)
+    # cv.imshow('points',smarties)
+    # print(points)
+
+    # cv.waitKey(0)
+    # cv.destroyAllWindows()
     
     
     
@@ -304,20 +345,5 @@ if __name__ == "__main__":
 """
 
 
-""" Smarties detection
 
-    smarties = cv.imread("Images/Smarties.jpg")
-    masked_img, mask = mask_smarties(smarties,179,5)
-    cnt,points = find_smarties(mask)
 
-    cv.imshow('prev',smarties)
-    cv.imshow('mask',masked_img)
-
-    for p in points:
-        cv.circle(smarties, p, 7, (0, 0, 0), 2)
-    cv.imshow('points',smarties)
-    print(points)
-
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-"""
