@@ -271,6 +271,26 @@ def get_red_center(image):
     cv.waitKey(0)
     return im_red, red_pos
 
+def from_pixel_to_frame(centers, z):
+    s_x, s_y = 1, 1 # Pixel sizes
+    o_r, o_c = 500, 300 # Coordinates of the principal point
+    f_x, f_y = round(736.354), round(739,397)
+
+    cam_frame = []
+    for center in centers:
+        # Get the pixel coordinates
+        r, c = center[0], center[1]
+
+        # Camera frame
+        x = z * (r - o_r) / f_x
+        y = -z * (c - o_c) / f_y
+       
+        if len(cam_frame) == 0:
+            cam_frame = [(x, y)]
+        else:
+            cam_frame = np.vstack((cam_frame, (x, y)))
+    return cam_frame
+    
 
 
 if __name__ == "__main__":
@@ -298,12 +318,19 @@ if __name__ == "__main__":
 
     # Circle detection for the skittles
     im = cv.imread("../Images/skittles5.jpg")
+    im = cv.resize(im, (1000, 600), interpolation=cv.INTER_LINEAR)
 
     # Get the array with format [x y r] in pixel coordinates
     circles = get_circles(im)
     im_red, red_points = get_red_center(im)
-    print(red_points)
 
+    print(f"Points in the image: {red_points}")
+
+    #calibration = np.arange([736.354], )
+
+    real_points = from_pixel_to_frame(red_points, 100)
+
+    print(f"Points in the camera frame: {real_points}")
     # Show the image
     cv.imshow("Detected Smarties", im_red)
     cv.waitKey(0)
