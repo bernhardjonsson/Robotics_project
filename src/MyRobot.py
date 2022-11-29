@@ -249,7 +249,7 @@ class MyRobot():
             dxl_present_position, dxl_comm_result, dxl_error = self.packetHandler.read2ByteTxRx(self.portHandler, self.motor_ids[i], 36)
 
             if dxl_comm_result != self.COMM_SUCCESS:
-                print(self.packetHandler.getTxRxResult(self.PROTOCOL_VERSION, dxl_comm_result))
+                Exception(self.packetHandler.getTxRxResult(self.PROTOCOL_VERSION, dxl_comm_result))
             elif dxl_error != 0:
                 raise Exception(self.packetHandler.getRxPacketError(dxl_error))
             else:
@@ -295,8 +295,10 @@ class MyRobot():
         q = self.MatEng.invKinematics(Ori,Pos,nargout=4)
         return q
 
+    def CamToWorld(self,pos):
+        pass
+
 
 if __name__ == "__main__":
     robot = MyRobot(0.2, 'COM4', 1000000)
     time.sleep(1)
-    
