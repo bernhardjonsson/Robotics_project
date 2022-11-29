@@ -271,10 +271,10 @@ def get_red_center(image):
     cv.waitKey(0)
     return im_red, red_pos
 
-def from_pixel_to_frame(centers, z):
+def from_pixel_to_frame(centers, cal_mat, z):
     s_x, s_y = 1, 1 # Pixel sizes
-    o_r, o_c = 500, 300 # Coordinates of the principal point
-    f_x, f_y = round(736.354), round(739,397)
+    o_r, o_c = round(cal_mat[0][2]), round(cal_mat[1][2]) # Coordinates of the principal point
+    f_x, f_y = round(cal_mat[0][0]), round(cal_mat[1][1])
 
     cam_frame = []
     for center in centers:
@@ -326,9 +326,9 @@ if __name__ == "__main__":
 
     print(f"Points in the image: {red_points}")
 
-    #calibration = np.arange([736.354], )
+    calibration = [[736.354, 0, 500], [0, 739.397, 300], [0, 0, 1]]
 
-    real_points = from_pixel_to_frame(red_points, 100)
+    real_points = from_pixel_to_frame(red_points, calibration, 100)
 
     print(f"Points in the camera frame: {real_points}")
     # Show the image
