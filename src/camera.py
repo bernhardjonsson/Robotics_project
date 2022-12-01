@@ -269,7 +269,16 @@ def get_red_center(image):
 
     cv.imshow("Masked image", masked_im)
     cv.waitKey(0)
-    return im_red, red_pos
+
+    unique_red = []
+    for i in range(len(red_pos)-1):
+        if red_pos[i] - red_pos[i+1] == [0.0,0.0,0.0]:
+            continue
+        else:
+            unique_red.append(red_pos[i])
+
+
+    return im_red, unique_red
 
 def from_pixel_to_frame(centers, cal_mat, z):
     s_x, s_y = 1, 1 # Pixel sizes
