@@ -33,6 +33,8 @@ class MyRobot():
         self.joint_pos = [0, 0, 0, 0]
         self.CamPos = [0,0,0]
         self.EndPos = [0,0,0]
+        self.T15 = []
+        self.T14 = []
 
         self.use_smooth_speed_flag = 0                  # Flag for using smooth speed
 #        self.rbt = 0                                    # RigidBodyTree
@@ -274,11 +276,11 @@ class MyRobot():
         T3 = np.asarray(T[2])
         T4 = np.asarray(T[3])
         T5 = np.asarray(T[4])
-        T14 = np.matmul(T1,np.matmul(T2,np.matmul(T3,T4)))
-        T15 = np.matmul(T1,np.matmul(T2,np.matmul(T3,T5)))
+        self.T14 = np.matmul(T1,np.matmul(T2,np.matmul(T3,T4)))
+        self.T15 = np.matmul(T1,np.matmul(T2,np.matmul(T3,T5)))
 
-        self.CamPos = (T15[0,3],T15[1,3],T15[2,3])
-        self.EndPos = (T14[0,3],T14[1,3],T14[2,3])
+        self.CamPos = (self.T15[0,3],self.T15[1,3],self.T15[2,3])
+        self.EndPos = (self.T14[0,3],self.T14[1,3],self.T14[2,3])
 
         return (self.CamPos,self.EndPos)
 
@@ -295,8 +297,14 @@ class MyRobot():
         q = self.MatEng.invKinematics(Ori,Pos,nargout=4)
         return q
 
-    def CamToWorld(self,pos):
-        pass
+    def CamToWorld(self,pos_cam):
+        # Calculate the transformation from 5 to 1
+        T51 = np.linalg.pinv(self.T15)
+
+        # Get the position in the world frame
+        pos_world = T51.dot(pos_cam)
+        
+        return pos_world
 
 
 if __name__ == "__main__":
