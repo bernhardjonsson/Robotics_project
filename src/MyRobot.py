@@ -26,6 +26,7 @@ class MyRobot():
         self.COMM_TX_FAIL                = -1001        # Communication Tx Failed
 
         self.MatEng = matlab.engine.start_matlab()      # For calling functions from matlab
+        self.MatEng.cd(r'src', nargout=0)
 
         # Setup of the robot
         self.motor_ids = [1, 2, 3, 4]                      # Motor IDs chronologically (see Dynamixel Wizard for more info)
@@ -231,7 +232,7 @@ class MyRobot():
 
         while True:
             self.read_joint_angles()
-            if max(self.joint_angle_error) < 2.5:
+            if max(self.joint_angle_error) < 3:
                 break
             #print(self.joint_pos)
         print("At Goal!\nCurrent pos; 1: " + str(self.joint_pos[0]) + ", 2: " + str(self.joint_pos[1]) + ", 3: " + str(self.joint_pos[2]) + ", 4: " + str(self.joint_pos[3]))
@@ -267,7 +268,10 @@ class MyRobot():
         #Outputs:
         #   CamPos : coordinate of the camera as a tupple
         #   EndPos : coordinate of the endeffector as a tupple
-
+        q1 = matlab.double(q1)
+        q2 = matlab.double(q2)
+        q3 = matlab.double(q3)
+        q4 = matlab.double(q4)
         T = self.MatEng.T_finder(q1,q2,q3,q4,nargout=5)
         T1 = np.asarray(T[0])
         T2 = np.asarray(T[1])

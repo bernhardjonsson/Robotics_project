@@ -221,7 +221,7 @@ def get_circles(image):
 
     det_circles = cv.HoughCircles(gray_blurred, cv.HOUGH_GRADIENT, dp = 1, minDist = 20, param1 = 50,
                                     param2 = 30, minRadius = 10, maxRadius = 40)
-    
+
     # Draw detected circles
     if det_circles is not None:
         det_circles = np.uint16(np.around(det_circles))
@@ -234,16 +234,17 @@ def get_circles(image):
         #     cv.circle(im, (a, b), 1, (0,0,255), 3)
         # # cv.imshow("Detected circles", im)
         # # cv.waitKey(0)
-    else:
-        print("No circles were detected.")
-        sys.exit()
-    
+    #else:
+        #print("No circles were detected.")
+        #sys.exit()
+
     return det_circles
 
-def get_red_center(image):
-    masked_im, mask = mask_smarties(image, 179, 5)
+def get_red_center(image,circles):
+    masked_im, mask = mask_smarties(image, 13, 2)
     _, points = find_smarties(mask)
-
+    if circles is None:
+        return image,None
     # Compute the distances between the centers of the smarties and the found red centers
     im_red = image.copy()
     dist = []
@@ -267,8 +268,8 @@ def get_red_center(image):
         cv.circle(im_red, (circles[i][0], circles[i][1]), circles[i][2], (0,255,0), 2)
         cv.circle(im_red, (circles[i][0], circles[i][1]), 2, (255,0,0), 2)
 
-    cv.imshow("Masked image", masked_im)
-    cv.waitKey(0)
+    #cv.imshow("Masked image", masked_im)
+    #cv.waitKey(0)
     return im_red, red_pos
 
 def from_pixel_to_frame(centers, cal_mat, z):
@@ -284,13 +285,13 @@ def from_pixel_to_frame(centers, cal_mat, z):
         # Camera frame
         x = z * (r - o_r) / f_x
         y = -z * (c - o_c) / f_y
-       
+
         if len(cam_frame) == 0:
             cam_frame = [(x, y)]
         else:
             cam_frame = np.vstack((cam_frame, (x, y)))
     return cam_frame
-    
+
 
 
 if __name__ == "__main__":
@@ -335,7 +336,7 @@ if __name__ == "__main__":
     cv.imshow("Detected Smarties", im_red)
     cv.waitKey(0)
 
-    
+
     # # Smarties detection
 
     # smarties = cv.imread("../Images/Smarties.jpg")
@@ -352,9 +353,9 @@ if __name__ == "__main__":
 
     # cv.waitKey(0)
     # cv.destroyAllWindows()
-    
-    
-    
+
+
+
 
 
 """
@@ -370,7 +371,3 @@ if __name__ == "__main__":
     cv.imshow('prev',prev_img)
     print(len(feat2))
 """
-
-
-
-
