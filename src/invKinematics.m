@@ -34,7 +34,7 @@ theta2 = phi + psi;
 
 % c2 = ((a1 + a2*cosd(theta3))*r3 + (a2*sind(theta3))*z3)/(r3^2 + z3^2);
 % s2 = (a1 + a2*cosd(theta3)*z3 + (a2*sind(theta3))*r3)/(r3^2 + z3^2);
-% 
+%
 % theta2 = atan2d(s2,c2);
 
 

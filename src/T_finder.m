@@ -26,11 +26,11 @@ T23 = [cosd(theta2), -sind(theta2), 0, L23*cosd(theta2);
        0, 0, 1, 0;
        0, 0, 0, 1];
 
-% {3} -> {4}     
+% {3} -> {4}
 T34 = [cosd(theta3), -sind(theta3), 0, L34*cosd(theta3);
        sind(theta3), cosd(theta3), 0, L34*sind(theta3);
        0, 0, 1, 0;
-       0, 0, 0, 1];    
+       0, 0, 0, 1];
 
 % {3} -> {5}
 T35 = [1, 0, 0, L35;

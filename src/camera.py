@@ -241,7 +241,7 @@ def get_circles(image):
     return det_circles
 
 def get_red_center(image,circles):
-    masked_im, mask = mask_smarties(image, 13, 2)
+    masked_im, mask = mask_smarties(image, 13, 5)
     _, points = find_smarties(mask)
     if circles is None:
         return image,None
@@ -253,7 +253,7 @@ def get_red_center(image,circles):
             dist = np.append(dist, np.sqrt((p[0] - r[0])**2 + (p[1] - r[1])**2))
 
     # Get the x minimum distances. x -> the number of found red centers
-    min_dist = np.partition(dist, 1)[0:len(points)]
+    min_dist = np.partition(dist, 1)[0:len(points)]                             # Sometime error for no reason
     dist = [dist[i:i+len(circles)] for i in range(0,len(dist),len(circles))]
 
     # Compute the positions of the red centers and draw the corresponding circles
@@ -268,16 +268,8 @@ def get_red_center(image,circles):
         cv.circle(im_red, (circles[i][0], circles[i][1]), circles[i][2], (0,255,0), 2)
         cv.circle(im_red, (circles[i][0], circles[i][1]), 2, (255,0,0), 2)
 
-    cv.imshow("Masked image", masked_im)
-    cv.waitKey(0)
 
-    unique_red = []
-    for i in range(len(red_pos)-1):
-        if red_pos[i] - red_pos[i+1] == [0.0,0.0,0.0]:
-            continue
-        else:
-            unique_red.append(red_pos[i])
-
+    unique_red = np.unique(red_pos,axis=0)
 
     return im_red, unique_red
 

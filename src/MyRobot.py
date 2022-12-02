@@ -209,7 +209,7 @@ class MyRobot():
 
         #Outputs:
         #   None
-        print("Goal Posistion:\n1: " + str(j1) + ", 2:" + str(j2) + ", 3:" + str(j3) + ", 4:" + str(j4))
+        print("Goal joint position:\n1: " + str(j1) + ", 2:" + str(j2) + ", 3:" + str(j3) + ", 4:" + str(j4))
 
         j1 = self.check_limits(j1, self.motor_ids[0])
         j2 = self.check_limits(j2, self.motor_ids[0])
@@ -227,6 +227,7 @@ class MyRobot():
         j3 = j3 + self.joint_offsets[2]
         j4 = j4 + self.joint_offsets[3]
 
+
         self.packetHandler.write2ByteTxRx(self.portHandler, self.motor_ids[0], self.ADDR_MX_GOAL_POSITION, self.deg_to_rot(j1))
         self.packetHandler.write2ByteTxRx(self.portHandler, self.motor_ids[1], self.ADDR_MX_GOAL_POSITION, self.deg_to_rot(j2))
         self.packetHandler.write2ByteTxRx(self.portHandler, self.motor_ids[2], self.ADDR_MX_GOAL_POSITION, self.deg_to_rot(j3))
@@ -237,7 +238,7 @@ class MyRobot():
             if max(self.joint_angle_error) < 3:
                 break
             #print(self.joint_pos)
-        print("At Goal!\nCurrent pos; 1: " + str(self.joint_pos[0]) + ", 2: " + str(self.joint_pos[1]) + ", 3: " + str(self.joint_pos[2]) + ", 4: " + str(self.joint_pos[3]))
+        print("At Goal!\nCurrent joint; 1: " + str(self.joint_pos[0]) + ", 2: " + str(self.joint_pos[1]) + ", 3: " + str(self.joint_pos[2]) + ", 4: " + str(self.joint_pos[3]))
 
     def  read_joint_angles(self):
         #read_joint_angles function for the MyRobot Class.
@@ -252,7 +253,7 @@ class MyRobot():
             dxl_present_position, dxl_comm_result, dxl_error = self.packetHandler.read2ByteTxRx(self.portHandler, self.motor_ids[i], 36)
 
             if dxl_comm_result != self.COMM_SUCCESS:
-                Exception(self.packetHandler.getTxRxResult(self.PROTOCOL_VERSION, dxl_comm_result))
+                Exception(self.packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 raise Exception(self.packetHandler.getRxPacketError(dxl_error))
             else:
@@ -263,13 +264,14 @@ class MyRobot():
         return j_a
 
     def forward(self,q1,q2,q3,q4):
-        # calculates the forwar kinematics
+        # calculates the forward kinematics
         #
         #Inputs:
         #   q1 - q4 : joint angles of the robot
         #Outputs:
         #   CamPos : coordinate of the camera as a tupple
         #   EndPos : coordinate of the endeffector as a tupple
+        #print([q1, q2, q3, q4])
         q1 = matlab.double(q1)
         q2 = matlab.double(q2)
         q3 = matlab.double(q3)
@@ -282,6 +284,9 @@ class MyRobot():
         T5 = np.asarray(T[4])
         self.T14 = np.matmul(T1,np.matmul(T2,np.matmul(T3,T4)))
         self.T15 = np.matmul(T1,np.matmul(T2,np.matmul(T3,T5)))
+        #print(self.T15)
+        #print(self.T14)
+        #print(np.matmul(T1,T2))
 
         self.CamPos = (self.T15[0,3],self.T15[1,3],self.T15[2,3])
         self.EndPos = (self.T14[0,3],self.T14[1,3],self.T14[2,3])
@@ -303,11 +308,13 @@ class MyRobot():
 
     def CamToWorld(self,pos_cam):
         # Calculate the transformation from 5 to 1
-        T51 = np.linalg.pinv(self.T15)
-
+        pos_cam = np.append(pos_cam,1)
+        T15_test = np.asarray([[0, 1, 0,self.T15[0,3]],[0,0,-1,self.T15[1,3]],[-1,0,0,self.T15[2,3]],[0,0,0,1]])
+        #print(T15_test)
+        #print(pos_cam)
         # Get the position in the world frame
-        pos_world = T51.dot(pos_cam)
-        
+        pos_world = T15_test.dot(pos_cam)
+
         return pos_world
 
 
